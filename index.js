@@ -1,3 +1,4 @@
+// تحديث سحب الكود: إجبار كلاودفلير على المزامنة 🚀
 addEventListener("fetch", event => {
   event.respondWith(handleRequest(event.request))
 })
