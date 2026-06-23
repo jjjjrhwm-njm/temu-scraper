@@ -1,4 +1,4 @@
-// تحديث سحب الكود: إجبار كلاودفلير على المزامنة 🚀
+// تحديث سحب الكود: حل مشكلة الدوران اللانهائي 🚀
 addEventListener("fetch", event => {
   event.respondWith(handleRequest(event.request))
 })
@@ -39,10 +39,11 @@ async function handleRequest(request) {
     let title = titleMatch ? titleMatch[1].trim() : "منتج جديد مسحوب";
 
     let images = [];
+    // ✅ تم إضافة حرف 'g' لكل أوامر البحث لمنع الدوران اللانهائي!
     let imgRegexes = [
         /"goodsImage"\s*:\s*"([^"]+)"/gi,
-        /"carouselImages"\s*:\s*\[([\s\S]*?)\]/i,
-        /property="og:image"\s+content="([^"]+)"/i
+        /"carouselImages"\s*:\s*\[([\s\S]*?)\]/gi,
+        /property="og:image"\s+content="([^"]+)"/gi
     ];
 
     imgRegexes.forEach(regex => {
@@ -73,10 +74,10 @@ async function handleRequest(request) {
     let priceRegex = /"price"?\s*:\s*"?(\d+(\.\d+)?)"?/g;
     let amountRegex = /"amount"?\s*:\s*"?(\d+(\.\d+)?)"?/g;
 
-    let match;
-    if ((match = minPriceRegex.exec(html)) !== null) { originalPrice = parseFloat(match[1]); }
-    else if ((match = priceRegex.exec(html)) !== null) { originalPrice = parseFloat(match[1]); }
-    else if ((match = amountRegex.exec(html)) !== null) { originalPrice = parseFloat(match[1]); }
+    let match2;
+    if ((match2 = minPriceRegex.exec(html)) !== null) { originalPrice = parseFloat(match2[1]); }
+    else if ((match2 = priceRegex.exec(html)) !== null) { originalPrice = parseFloat(match2[1]); }
+    else if ((match2 = amountRegex.exec(html)) !== null) { originalPrice = parseFloat(match2[1]); }
 
     if (originalPrice === 0) {
        let metaPrice = html.match(/property="product:price:amount"\s+content="([^"]+)"/i) || html.match(/property="og:price:amount"\s+content="([^"]+)"/i);
