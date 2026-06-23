@@ -1,4 +1,4 @@
-// تحديث سحب الكود: حل مشكلة الدوران اللانهائي 🚀
+// التحديث الأقوى: ميزة القفزة المزدوجة لتخطي روابط تيمو المختصرة 🦘🚀
 addEventListener("fetch", event => {
   event.respondWith(handleRequest(event.request))
 })
@@ -18,30 +18,48 @@ async function handleRequest(request) {
   let targetUrl = url.searchParams.get('url');
 
   if (!targetUrl) {
-    return new Response(JSON.stringify({ error: "الرجاء توفير رابط المنتج في المعلمة 'url'" }), { 
-      status: 400, 
-      headers: { "Content-Type": "application/json", ...corsHeaders } 
+    return new Response(JSON.stringify({ error: "الرجاء توفير الرابط" }), { 
+      status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } 
     });
   }
 
   try {
-    const response = await fetch(targetUrl, {
+    const fetchOptions = {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
         'Accept-Language': 'ar,en-US;q=0.9,en;q=0.8'
-      }
-    });
+      },
+      redirect: 'follow'
+    };
 
-    const html = await response.text();
+    // 1. القفزة الأولى: فتح الرابط المختصر
+    let response = await fetch(targetUrl, fetchOptions);
+    let html = await response.text();
 
+    // 2. البحث عن الرابط الطويل الحقيقي المخفي
+    let realUrlMatch = html.match(/<link\s+rel="canonical"\s+href="([^"]+)"/i) || html.match(/property="og:url"\s+content="([^"]+)"/i);
+    let realUrl = realUrlMatch ? realUrlMatch[1] : null;
+
+    // 3. القفزة الثانية: إذا وجدنا الرابط الحقيقي، نقفز إليه فوراً!
+    if (realUrl && realUrl.includes('temu.com') && !realUrl.includes('share.temu.com')) {
+        targetUrl = realUrl;
+        response = await fetch(targetUrl, fetchOptions);
+        html = await response.text();
+    }
+
+    // --- محرك سحب البيانات ---
+    
+    // سحب وتنظيف الاسم
     let titleMatch = html.match(/<title>([^<]+)<\/title>/i) || html.match(/property="og:title"\s+content="([^"]+)"/i);
     let title = titleMatch ? titleMatch[1].trim() : "منتج جديد مسحوب";
+    title = title.replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&'); // تنظيف الرموز المزعجة
 
+    // سحب الصور
     let images = [];
-    // ✅ تم إضافة حرف 'g' لكل أوامر البحث لمنع الدوران اللانهائي!
     let imgRegexes = [
         /"goodsImage"\s*:\s*"([^"]+)"/gi,
+        /"thumbUrl"\s*:\s*"([^"]+)"/gi, // خاصية إضافية يستخدمها تيمو
         /"carouselImages"\s*:\s*\[([\s\S]*?)\]/gi,
         /property="og:image"\s+content="([^"]+)"/gi
     ];
@@ -69,6 +87,7 @@ async function handleRequest(request) {
         return !lower.includes('logo') && !lower.includes('icon') && !lower.includes('avatar') && !lower.includes('svg');
     }).slice(0, 5); 
 
+    // سحب السعر
     let originalPrice = 0;
     let minPriceRegex = /"minPrice"?\s*:\s*"?(\d+(\.\d+)?)"?/g;
     let priceRegex = /"price"?\s*:\s*"?(\d+(\.\d+)?)"?/g;
@@ -90,7 +109,7 @@ async function handleRequest(request) {
         title: title,
         price: originalPrice,
         images: images,
-        originalUrl: targetUrl
+        originalUrl: targetUrl // سيُظهر الرابط الحقيقي الآن
       }
     }), {
       headers: { "Content-Type": "application/json", ...corsHeaders }
@@ -98,8 +117,7 @@ async function handleRequest(request) {
 
   } catch (error) {
     return new Response(JSON.stringify({ success: false, error: error.message }), { 
-      status: 500, 
-      headers: { "Content-Type": "application/json", ...corsHeaders } 
+      status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } 
     });
   }
 }
